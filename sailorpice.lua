@@ -1,4 +1,4 @@
--- [[ KYBROND CORE V30.9 - FIX DEATH BUG - ANTI-KICK - AUTOEXEC ]]
+-- [[ KYBROND CORE V31.0 - PERMANENT BLACKOUT - IMMORTAL LOOP ]]
 
 -- 1. KIỂM TRA TRẠNG THÁI LOAD GAME
 if not game:IsLoaded() then
@@ -14,7 +14,7 @@ local Player = Players.LocalPlayer
 
 -- Chờ PlayerGui sẵn sàng
 Player:WaitForChild("PlayerGui")
-task.wait(3) -- Thời gian đệm ổn định dữ liệu
+task.wait(2) -- Thời gian đệm
 
 -- [[ 3. LOGIC ANTI-AFK ]]
 Player.Idled:Connect(function()
@@ -22,7 +22,7 @@ Player.Idled:Connect(function()
     VirtualUser:ClickButton2(Vector2.new())
 end)
 
--- [[ 0. TẠO MÀN HÌNH ĐEN TUYỀN ]]
+-- [[ 0. TẠO MÀN HÌNH ĐEN VĨNH VIỄN (FIX RESET ON SPAWN) ]]
 local function CreateBlackScreen()
     local oldGui = Player.PlayerGui:FindFirstChild("KybrondBlackout")
     if oldGui then oldGui:Destroy() end
@@ -34,11 +34,14 @@ local function CreateBlackScreen()
     ScreenGui.Parent = Player.PlayerGui
     ScreenGui.IgnoreGuiInset = true 
     ScreenGui.DisplayOrder = 9999 
+    
+    -- QUAN TRỌNG: Dòng này giúp GUI không bị biến mất khi bạn chết
+    ScreenGui.ResetOnSpawn = false 
 
     BlackFrame.Name = "MainOverlay"
     BlackFrame.Size = UDim2.new(1, 0, 1, 0)
     BlackFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) 
-    BlackFrame.BackgroundTransparency = 0.1 -- Đen kịt hoàn toàn
+    BlackFrame.BackgroundTransparency = 0.1 -- Chỉnh về 0.5 nếu muốn nhìn mờ
     BlackFrame.BorderSizePixel = 0
     BlackFrame.Parent = ScreenGui
 
@@ -53,6 +56,7 @@ local function CreateBlackScreen()
     StatusLabel.Parent = BlackFrame
 end
 
+-- Kích hoạt màn hình đen
 CreateBlackScreen()
 
 -- [[ 1 & 2. DANH SÁCH MỤC TIÊU ]]
@@ -90,7 +94,7 @@ local function CheckAndEquipTool()
     end
 end
 
--- Noclip tự cập nhật theo nhân vật mới
+-- Noclip tự động bám theo nhân vật mới
 RunService.Stepped:Connect(function()
     local char = Player.Character
     if char then
@@ -100,21 +104,20 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- [[ VÒNG LẶP CHÍNH - IMMORTAL UPDATE ]]
+-- [[ VÒNG LẶP CHÍNH - IMMORTAL LOOP ]]
 task.spawn(function()
-    warn("!!! KYBROND V30.9 - IMMORTAL LOOP ACTIVE !!!")
+    warn("!!! KYBROND V31.0 - PERMANENT BLACKOUT ACTIVE !!!")
     
     while true do
         task.wait(0.2)
         
-        -- CẬP NHẬT NHÂN VẬT MỖI VÒNG LẶP (Fix lỗi chết đứng)
+        -- Cập nhật nhân vật sau khi hồi sinh
         local char = Player.Character or Player.CharacterAdded:Wait()
         local humanoid = char:WaitForChild("Humanoid")
         local root = char:WaitForChild("HumanoidRootPart")
         
-        -- Nếu đang chết thì đợi cho đến khi hồi sinh
         if humanoid.Health <= 0 then 
-            MyCurrentLocation = "" -- Reset vị trí để teleport lại khi sống lại
+            MyCurrentLocation = "" 
             continue 
         end
 
@@ -130,7 +133,7 @@ task.spawn(function()
                         root.AssemblyLinearVelocity = Vector3.new(0,0,0)
                         TeleportRemote:FireServer(targetIsland)
                         MyCurrentLocation = targetIsland
-                        task.wait(0.5) -- Đợi lâu hơn một chút sau khi nhảy đảo
+                        task.wait(0.5) 
                     end
                 end
 
@@ -146,10 +149,9 @@ task.spawn(function()
                 end
                 hover.Velocity = Vector3.new(0,0,0)
 
-                -- Combat Loop (Thêm check máu nhân vật)
                 while target and target.Parent and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 do
-                    -- Kiểm tra xem mình còn sống không, nếu chết thì thoát vòng lặp đánh quái ngay
-                    if not char or not char:FindFirstChild("Humanoid") or char.Humanoid.Health <= 0 then break end
+                    -- Nếu nhân vật chết trong khi đang đánh, thoát vòng lặp ngay
+                    if humanoid.Health <= 0 then break end
                     
                     local currentTRoot = target:FindFirstChild("HumanoidRootPart") or target.PrimaryPart
                     if currentTRoot then
