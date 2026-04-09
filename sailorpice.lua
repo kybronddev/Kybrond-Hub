@@ -1,20 +1,34 @@
--- [[ KYBROND CORE V30.4 - TOTAL BLACKOUT - CUSTOM WARNING ]]
+-- [[ KYBROND CORE V30.6 - AUTOEXEC COMPATIBLE - TOTAL BLACKOUT ]]
+
+-- 1. KIỂM TRA TRẠNG THÁI LOAD GAME (Cơ chế Check-Load)
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+-- 2. LOGIC CHỜ PLAYER
 local Player = Players.LocalPlayer
+while not Player do
+    task.wait()
+    Player = Players.LocalPlayer
+end
 
--- [[ 0. TẠO MÀN HÌNH ĐEN TUYỀN VỚI LỜI CẢNH BÁO "GẮT" ]]
+-- Chờ PlayerGui sẵn sàng
+Player:WaitForChild("PlayerGui")
+
+-- [[ 0. TẠO MÀN HÌNH ĐEN TUYỀN VỚI LỜI CẢNH BÁO ]]
 local function CreateBlackScreen()
-    local oldGui = Player:WaitForChild("PlayerGui"):FindFirstChild("KybrondBlackout")
+    local oldGui = Player.PlayerGui:FindFirstChild("KybrondBlackout")
     if oldGui then oldGui:Destroy() end
 
     local ScreenGui = Instance.new("ScreenGui")
     local BlackFrame = Instance.new("Frame")
 
     ScreenGui.Name = "KybrondBlackout"
-    ScreenGui.Parent = Player:WaitForChild("PlayerGui")
+    ScreenGui.Parent = Player.PlayerGui
     ScreenGui.IgnoreGuiInset = true 
     ScreenGui.DisplayOrder = 9999 
 
@@ -25,22 +39,20 @@ local function CreateBlackScreen()
     BlackFrame.BorderSizePixel = 0
     BlackFrame.Parent = ScreenGui
 
-    -- Dòng chữ cảnh báo theo yêu cầu của bạn
     local StatusLabel = Instance.new("TextLabel")
     StatusLabel.Text = "May nhin hong moc mat may ra gio"
     StatusLabel.Size = UDim2.new(1, 0, 0, 50)
     StatusLabel.Position = UDim2.new(0, 0, 0.45, 0)
     StatusLabel.BackgroundTransparency = 1
-    StatusLabel.TextColor3 = Color3.fromRGB(255, 0, 0) -- Màu đỏ cảnh báo
-    StatusLabel.Font = Enum.Font.GothamBold
-    StatusLabel.TextSize = 30 -- Tăng kích thước chữ cho dễ đọc
+    StatusLabel.TextColor3 = Color3.fromRGB(255, 0, 0) 
+    StatusLabel.Font = Enum.Font.SourceSansBold
+    StatusLabel.TextSize = 30 
     StatusLabel.Parent = BlackFrame
 end
 
--- Kích hoạt màn hình đen
 CreateBlackScreen()
 
--- [[ 1 & 2. DANH SÁCH MỤC TIÊU (Giữ nguyên logic gốc) ]]
+-- [[ 1 & 2. DANH SÁCH MỤC TIÊU ]]
 local BossList = {"StrongestShinobiBoss", "AizenBoss", "YujiBoss", "GojoBoss", "SukunaBoss", "JinwooBoss", "YamatoBoss"}
 local MobList = {"Swordsman4", "ArenaFighter2", "Ninja4", "Slime3", "Quincy4"}
 
@@ -55,7 +67,7 @@ local LocationMapping = {
     ["Ninja4"] = "Ninja", ["Slime3"] = "Slime", ["Quincy4"] = "SoulDominion"
 }
 
--- [[ CẤU HÌNH CHIẾN ĐẤU ]]
+-- [[ CẤU HÌNH ]]
 local HeightOffset = 10 
 local SkillDelay = 0.1   
 local MyCurrentLocation = ""
@@ -65,7 +77,7 @@ local AbilityRemote = ReplicatedStorage:FindFirstChild("AbilitySystem")
     and ReplicatedStorage.AbilitySystem.Remotes:FindFirstChild("RequestAbility")
 local TeleportRemote = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("TeleportToPortal")
 
--- [[ MODULES TỐI ƯU ]]
+-- [[ MODULES ]]
 local function CheckAndEquipTool()
     local char = Player.Character
     if char and not char:FindFirstChildOfClass("Tool") then
@@ -85,7 +97,7 @@ end)
 
 -- [[ VÒNG LẶP CHÍNH ]]
 task.spawn(function()
-    warn("!!! KYBROND V30.4 - CUSTOM ALERT ACTIVE !!!")
+    warn("!!! KYBROND V30.6 - AUTOEXEC READY !!!")
     
     while true do
         task.wait(0.2)
