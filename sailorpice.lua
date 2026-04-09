@@ -1,6 +1,6 @@
--- [[ KYBROND CORE V30.6 - AUTOEXEC COMPATIBLE - TOTAL BLACKOUT ]]
+-- [[ KYBROND CORE V30.7 - ANTI-KICK - AUTOEXEC - TOTAL BLACKOUT ]]
 
--- 1. KIỂM TRA TRẠNG THÁI LOAD GAME (Cơ chế Check-Load)
+-- 1. KIỂM TRA TRẠNG THÁI LOAD GAME
 if not game:IsLoaded() then
     game.Loaded:Wait()
 end
@@ -8,6 +8,7 @@ end
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VirtualUser = game:GetService("VirtualUser") -- Thêm dịch vụ giả lập người dùng
 
 -- 2. LOGIC CHỜ PLAYER
 local Player = Players.LocalPlayer
@@ -18,6 +19,14 @@ end
 
 -- Chờ PlayerGui sẵn sàng
 Player:WaitForChild("PlayerGui")
+
+-- [[ 3. LOGIC ANTI-AFK (CHỐNG KICK 20 PHÚT) ]]
+-- Tự động click chuột ảo khi hệ thống báo trạng thái Idle
+Player.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+    warn("!!! KYBROND ANTI-AFK: DISCONNECT PREVENTED !!!")
+end)
 
 -- [[ 0. TẠO MÀN HÌNH ĐEN TUYỀN VỚI LỜI CẢNH BÁO ]]
 local function CreateBlackScreen()
@@ -97,7 +106,7 @@ end)
 
 -- [[ VÒNG LẶP CHÍNH ]]
 task.spawn(function()
-    warn("!!! KYBROND V30.6 - AUTOEXEC READY !!!")
+    warn("!!! KYBROND V30.7 - ANTI-KICK ACTIVE !!!")
     
     while true do
         task.wait(0.2)
