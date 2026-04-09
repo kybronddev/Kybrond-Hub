@@ -1,4 +1,4 @@
--- [[ KYBROND CORE V30.7 - ANTI-KICK - AUTOEXEC - TOTAL BLACKOUT ]]
+-- [[ KYBROND CORE V30.8 - ANTI-KICK - AUTOEXEC - STABLE LOAD ]]
 
 -- 1. KIỂM TRA TRẠNG THÁI LOAD GAME
 if not game:IsLoaded() then
@@ -8,20 +8,19 @@ end
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local VirtualUser = game:GetService("VirtualUser") -- Thêm dịch vụ giả lập người dùng
+local VirtualUser = game:GetService("VirtualUser")
 
--- 2. LOGIC CHỜ PLAYER
+-- 2. LOGIC CHỜ PLAYER VÀ THỜI GIAN ĐỆM (Safety Buffer)
 local Player = Players.LocalPlayer
 while not Player do
-    task.wait()
+    task.wait(0.5) -- Tăng thời gian chờ check Player lên 0.5s để giảm tải CPU lúc đầu
     Player = Players.LocalPlayer
 end
 
--- Chờ PlayerGui sẵn sàng
 Player:WaitForChild("PlayerGui")
+task.wait(3) -- TĂNG THÊM 3 GIÂY chờ ổn định toàn bộ dữ liệu map và NPCs
 
 -- [[ 3. LOGIC ANTI-AFK (CHỐNG KICK 20 PHÚT) ]]
--- Tự động click chuột ảo khi hệ thống báo trạng thái Idle
 Player.Idled:Connect(function()
     VirtualUser:CaptureController()
     VirtualUser:ClickButton2(Vector2.new())
@@ -106,7 +105,7 @@ end)
 
 -- [[ VÒNG LẶP CHÍNH ]]
 task.spawn(function()
-    warn("!!! KYBROND V30.7 - ANTI-KICK ACTIVE !!!")
+    warn("!!! KYBROND V30.8 - STABLE LOAD ACTIVE !!!")
     
     while true do
         task.wait(0.2)
