@@ -1,4 +1,4 @@
--- [[ KYBROND CORE V30.8 - ANTI-KICK - AUTOEXEC - STABLE LOAD ]]
+-- [[ KYBROND CORE V30.9 - FIX DEATH BUG - ANTI-KICK - AUTOEXEC ]]
 
 -- 1. KIỂM TRA TRẠNG THÁI LOAD GAME
 if not game:IsLoaded() then
@@ -10,24 +10,19 @@ local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local VirtualUser = game:GetService("VirtualUser")
 
--- 2. LOGIC CHỜ PLAYER VÀ THỜI GIAN ĐỆM (Safety Buffer)
 local Player = Players.LocalPlayer
-while not Player do
-    task.wait(0.5) -- Tăng thời gian chờ check Player lên 0.5s để giảm tải CPU lúc đầu
-    Player = Players.LocalPlayer
-end
 
+-- Chờ PlayerGui sẵn sàng
 Player:WaitForChild("PlayerGui")
-task.wait(3) -- TĂNG THÊM 3 GIÂY chờ ổn định toàn bộ dữ liệu map và NPCs
+task.wait(3) -- Thời gian đệm ổn định dữ liệu
 
--- [[ 3. LOGIC ANTI-AFK (CHỐNG KICK 20 PHÚT) ]]
+-- [[ 3. LOGIC ANTI-AFK ]]
 Player.Idled:Connect(function()
     VirtualUser:CaptureController()
     VirtualUser:ClickButton2(Vector2.new())
-    warn("!!! KYBROND ANTI-AFK: DISCONNECT PREVENTED !!!")
 end)
 
--- [[ 0. TẠO MÀN HÌNH ĐEN TUYỀN VỚI LỜI CẢNH BÁO ]]
+-- [[ 0. TẠO MÀN HÌNH ĐEN TUYỀN ]]
 local function CreateBlackScreen()
     local oldGui = Player.PlayerGui:FindFirstChild("KybrondBlackout")
     if oldGui then oldGui:Destroy() end
@@ -43,7 +38,7 @@ local function CreateBlackScreen()
     BlackFrame.Name = "MainOverlay"
     BlackFrame.Size = UDim2.new(1, 0, 1, 0)
     BlackFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) 
-    BlackFrame.BackgroundTransparency = 0.4 
+    BlackFrame.BackgroundTransparency = 0 -- Đen kịt hoàn toàn
     BlackFrame.BorderSizePixel = 0
     BlackFrame.Parent = ScreenGui
 
@@ -95,23 +90,33 @@ local function CheckAndEquipTool()
     end
 end
 
+-- Noclip tự cập nhật theo nhân vật mới
 RunService.Stepped:Connect(function()
-    if Player.Character then
-        for _, part in ipairs(Player.Character:GetChildren()) do
+    local char = Player.Character
+    if char then
+        for _, part in ipairs(char:GetChildren()) do
             if part:IsA("BasePart") then part.CanCollide = false end
         end
     end
 end)
 
--- [[ VÒNG LẶP CHÍNH ]]
+-- [[ VÒNG LẶP CHÍNH - IMMORTAL UPDATE ]]
 task.spawn(function()
-    warn("!!! KYBROND V30.8 - STABLE LOAD ACTIVE !!!")
+    warn("!!! KYBROND V30.9 - IMMORTAL LOOP ACTIVE !!!")
     
     while true do
         task.wait(0.2)
-        local char = Player.Character
-        local root = char and char:FindFirstChild("HumanoidRootPart")
-        if not root then continue end
+        
+        -- CẬP NHẬT NHÂN VẬT MỖI VÒNG LẶP (Fix lỗi chết đứng)
+        local char = Player.Character or Player.CharacterAdded:Wait()
+        local humanoid = char:WaitForChild("Humanoid")
+        local root = char:WaitForChild("HumanoidRootPart")
+        
+        -- Nếu đang chết thì đợi cho đến khi hồi sinh
+        if humanoid.Health <= 0 then 
+            MyCurrentLocation = "" -- Reset vị trí để teleport lại khi sống lại
+            continue 
+        end
 
         for _, entry in ipairs(StaticPriorityList) do
             local name = entry.name
@@ -125,7 +130,7 @@ task.spawn(function()
                         root.AssemblyLinearVelocity = Vector3.new(0,0,0)
                         TeleportRemote:FireServer(targetIsland)
                         MyCurrentLocation = targetIsland
-                        task.wait(0.3) 
+                        task.wait(0.5) -- Đợi lâu hơn một chút sau khi nhảy đảo
                     end
                 end
 
@@ -141,7 +146,11 @@ task.spawn(function()
                 end
                 hover.Velocity = Vector3.new(0,0,0)
 
+                -- Combat Loop (Thêm check máu nhân vật)
                 while target and target.Parent and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 do
+                    -- Kiểm tra xem mình còn sống không, nếu chết thì thoát vòng lặp đánh quái ngay
+                    if not char or not char:FindFirstChild("Humanoid") or char.Humanoid.Health <= 0 then break end
+                    
                     local currentTRoot = target:FindFirstChild("HumanoidRootPart") or target.PrimaryPart
                     if currentTRoot then
                         root.CFrame = currentTRoot.CFrame * CFrame.new(0, HeightOffset, 0)
