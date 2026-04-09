@@ -1,3 +1,6 @@
+print("---------------------------------------")
+print("KYBROND HUB: DANG KHOI DONG...")
+print("---------------------------------------")
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
 local Window = OrionLib:MakeWindow({Name = "KYBROND HUB V9 | STEALTH QA EDITION", HidePremium = false, SaveConfig = true, ConfigFolder = "KybrondTest"})
 
