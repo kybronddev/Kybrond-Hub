@@ -77,7 +77,7 @@ local LocationMapping = {
 }
 
 -- [[ CẤU HÌNH ]]
-local HeightOffset = 10 
+local HeightOffset = 7 
 local SkillDelay = 0.1   
 local MyCurrentLocation = ""
 
