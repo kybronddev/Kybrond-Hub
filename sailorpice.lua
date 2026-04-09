@@ -1,94 +1,140 @@
--- [[ KYBROND HUB V5.2: NINJA FOCUS ]]
--- Chỉ đánh Ninja | Lướt mượt 100% | Tự động quay lại khi quái hồi sinh
-
-_G.AutoFarm = true
-_G.Distance = 10 -- Độ cao an toàn 10 studs
-_G.FarmSpeed = 100 -- Tốc độ đã tăng để không còn bị chậm
-
+-- [[ KYBROND CORE V30.1 - NO ANTI-PAUSE - FULL TARGETS ]]
 local Player = game.Players.LocalPlayer
-local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
-local RS = game:GetService("ReplicatedStorage")
-local NPCs = workspace:WaitForChild("NPCs")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local CurrentTween = nil
+-- 1. DANH SÁCH BOSS
+local BossList = {
+    "StrongestShinobiBoss", "AizenBoss", "YujiBoss", 
+    "GojoBoss", "SukunaBoss", "JinwooBoss", "YamatoBoss"
+}
 
--- [[ GIỮ NGUYÊN LOGIC V5: TỐI ƯU NHÂN VẬT ]]
-local function OptimizeCharacter()
-    if Player.Character and Player.Character:FindFirstChild("Humanoid") then
-        Player.Character.Humanoid.PlatformStand = true 
-        for _, v in pairs(Player.Character:GetDescendants()) do
-            if v:IsA("BasePart") then v.CanCollide = false end
+-- 2. DANH SÁCH QUÁI (Update V29.4)
+local MobList = {
+    "Swordsman4", "ArenaFighter2", "Ninja4", "Slime3", "Quincy4"
+}
+
+-- 3. MAPPING ĐẢO CHUẨN (SoulDominion, No Academy)
+local LocationMapping = {
+    ["StrongestShinobiBoss"] = "Ninja",
+    ["AizenBoss"]            = "HollowIsland",
+    ["YujiBoss"]             = "Shibuya",
+    ["GojoBoss"]             = "Shibuya",
+    ["SukunaBoss"]           = "Shibuya",
+    ["JinwooBoss"]           = "Sailor",
+    ["YamatoBoss"]           = "Judgement",
+    ["Swordsman4"]           = "Judgement",
+    ["ArenaFighter2"]        = "Lawless",
+    ["Ninja4"]               = "Ninja",
+    ["Slime3"]               = "Slime",
+    ["Quincy4"]              = "SoulDominion"
+}
+
+-- 4. CẤU HÌNH CHIẾN ĐẤU
+local HeightOffset = 10 
+local SkillDelay = 0.1   
+local MyCurrentLocation = ""
+
+-- [[ 5. MODULE TỰ ĐỘNG TRANG BỊ VŨ KHÍ (V29.5) ]]
+local function CheckAndEquipTool()
+    local Character = Player.Character
+    if Character and not Character:FindFirstChildOfClass("Tool") then
+        local Backpack = Player:FindFirstChild("Backpack")
+        if Backpack then
+            local Items = Backpack:GetChildren()
+            if Items[1] and Items[1]:IsA("Tool") then
+                Character.Humanoid:EquipTool(Items[1])
+            end
         end
     end
 end
 
--- [[ GIỮ NGUYÊN LOGIC V5: ELITE GLIDE ]]
-local function EliteGlide(TargetCFrame)
-    local Root = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
-    if not Root then return end
+-- [[ 6. LOGIC NOCLIP ]]
+RunService.Stepped:Connect(function()
+    if Player.Character then
+        for _, v in pairs(Player.Character:GetDescendants()) do
+            if v:IsA("BasePart") then v.CanCollide = false end
+        end
+    end
+end)
 
-    local Distance = (Root.Position - TargetCFrame.Position).Magnitude
-    if Distance < 2 then return end 
-
-    local Time = Distance / _G.FarmSpeed
-    local Info = TweenInfo.new(Time, Enum.EasingStyle.Linear) 
-    
-    if CurrentTween then CurrentTween:Cancel() end
-    CurrentTween = TweenService:Create(Root, Info, {CFrame = TargetCFrame})
-    CurrentTween:Play()
-    CurrentTween.Completed:Wait()
+-- [[ 7. HÀM SỬ DỤNG SKILL ]]
+local function UseSkillRemote()
+    local skillRemote = ReplicatedStorage:FindFirstChild("AbilitySystem") 
+        and ReplicatedStorage.AbilitySystem:FindFirstChild("Remotes") 
+        and ReplicatedStorage.AbilitySystem.Remotes:FindFirstChild("RequestAbility")
+    if skillRemote then skillRemote:FireServer(2) end
 end
 
--- [[ VÒNG LẶP LOGIC CHÍNH ]]
+-- [[ 8. VÒNG LẶP CHÍNH - NO ANTI-PAUSE ]]
 task.spawn(function()
-    print("--- KYBROND V5.2: NINJA FARM ACTIVE ---")
+    warn("!!! KYBROND V30.1 - ANTI-PAUSE REMOVED - FULL SPEED !!!")
     
-    -- Kết nối Noclip liên tục
-    RunService.Stepped:Connect(function()
-        if _G.AutoFarm then OptimizeCharacter() end
-    end)
+    while true do
+        task.wait(0.2)
+        local root = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
+        if not root then continue end
 
-    while _G.AutoFarm do
-        task.wait()
-        
-        -- TÌM MỤC TIÊU: Chỉ lọc những quái có tên chứa chữ "Ninja"
-        local Target = nil
-        local MinDist = math.huge
-        
-        for _, n in pairs(NPCs:GetChildren()) do
-            -- Kiểm tra tên phải có chữ Ninja và còn sống
-            if n.Name:find("Ninja") and n:FindFirstChild("Humanoid") and n.Humanoid.Health > 0 and n:FindFirstChild("HumanoidRootPart") then
-                local dist = (Player.Character.HumanoidRootPart.Position - n.HumanoidRootPart.Position).Magnitude
-                if dist < MinDist then
-                    MinDist = dist
-                    Target = n
+        -- Danh sách ưu tiên
+        local PriorityList = {}
+        for _, b in pairs(BossList) do table.insert(PriorityList, {name = b, type = "Boss"}) end
+        for _, m in pairs(MobList) do table.insert(PriorityList, {name = m, type = "Mob"}) end
+
+        for _, entry in pairs(PriorityList) do
+            local name = entry.name
+            local targetType = entry.type
+            local target = workspace.NPCs:FindFirstChild(name) or workspace:FindFirstChild(name, true)
+            
+            if target and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
+                local targetIsland = LocationMapping[name]
+                
+                -- Nhảy đảo (Bỏ qua kiểm tra Pause, bay thẳng)
+                if targetIsland and targetIsland ~= MyCurrentLocation then
+                    local remoteTele = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("TeleportToPortal")
+                    if remoteTele then
+                        root.AssemblyLinearVelocity = Vector3.new(0,0,0)
+                        remoteTele:FireServer(targetIsland)
+                        MyCurrentLocation = targetIsland
+                        task.wait(0.3) -- Đợi ngắn để Server nhận tọa độ
+                    end
                 end
-            end
-        end
 
-        if Target and Target:FindFirstChild("HumanoidRootPart") then
-            local TRoot = Target.HumanoidRootPart
-            local GoalCFrame = TRoot.CFrame * CFrame.new(0, _G.Distance, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-            
-            -- Lướt tới Ninja mục tiêu
-            EliteGlide(GoalCFrame)
-            
-            -- Đánh cho đến khi quái chết
-            while _G.AutoFarm and Target.Parent and Target.Humanoid.Health > 0 do
-                -- Khóa vị trí 10 studs
-                Player.Character.HumanoidRootPart.CFrame = TRoot.CFrame * CFrame.new(0, _G.Distance, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-                Player.Character.HumanoidRootPart.Velocity = Vector3.new(0,0,0)
+                local tRoot = target:FindFirstChild("HumanoidRootPart") or target.PrimaryPart
+                if not tRoot then continue end
 
-                pcall(function()
-                    local r1 = RS:FindFirstChild("CombatRemote", true)
-                    local r2 = RS:FindFirstChild("RequestHit", true)
-                    if r1 then r1:FireServer() end
-                    if r2 then r2:FireServer(Target) end
-                end)
-                task.wait(0.1)
+                CheckAndEquipTool()
+
+                local hover = root:FindFirstChild("KybrondHover") or Instance.new("BodyVelocity")
+                hover.Name = "KybrondHover"; hover.MaxForce = Vector3.new(9e9, 9e9, 9e9); hover.Parent = root
+                hover.Velocity = Vector3.new(0,0,0)
+
+                while target and target.Parent and target.Humanoid.Health > 0 do
+                    local currentTRoot = target:FindFirstChild("HumanoidRootPart") or target.PrimaryPart
+                    if currentTRoot then
+                        root.CFrame = currentTRoot.CFrame * CFrame.new(0, HeightOffset, 0)
+                        root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
+                        
+                        CheckAndEquipTool()
+                        UseSkillRemote()
+                    else
+                        break 
+                    end
+                    task.wait(SkillDelay)
+
+                    -- Săn Boss quay xe
+                    if targetType == "Mob" then
+                        local bossCheck = false
+                        for _, bName in pairs(BossList) do
+                            local b = workspace.NPCs:FindFirstChild(bName)
+                            if b and b:FindFirstChild("Humanoid") and b.Humanoid.Health > 0 then
+                                bossCheck = true; break
+                            end
+                        end
+                        if bossCheck then break end 
+                    end
+                end
+                break 
             end
-            -- Sau khi quái chết, vòng lặp 'while _G.AutoFarm' sẽ tự động quét đợt tiếp theo
         end
     end
 end)
