@@ -1,9 +1,13 @@
--- [[ KYBROND HUB V5.2: NINJA FOCUS ]]
--- Chỉ đánh Ninja | Lướt mượt 100% | Tự động quay lại khi quái hồi sinh
+-- [[ SAILORPICE.LUA - VERSION 5.2 ELITE ]]
+-- Tích hợp Orion UI với nút gạt bật/tắt Auto Farm
 
-_G.AutoFarm = true
-_G.Distance = 10 -- Độ cao an toàn 10 studs
-_G.FarmSpeed = 100 -- Tốc độ đã tăng để không còn bị chậm
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+local Window = OrionLib:MakeWindow({Name = "KYBROND HUB | SAILOR PIECE", HidePremium = false, SaveConfig = true, ConfigFolder = "SailorPiceConfig"})
+
+-- [[ BIẾN CẤU HÌNH CỐ ĐỊNH ]]
+_G.AutoFarm = false -- Mặc định tắt để bạn chủ động gạt nút
+_G.Distance = 10 
+_G.FarmSpeed = 100 
 
 local Player = game.Players.LocalPlayer
 local TweenService = game:GetService("TweenService")
@@ -13,7 +17,7 @@ local NPCs = workspace:WaitForChild("NPCs")
 
 local CurrentTween = nil
 
--- [[ GIỮ NGUYÊN LOGIC V5: TỐI ƯU NHÂN VẬT ]]
+-- [[ HÀM TỐI ƯU HÓA NHÂN VẬT (GIỮ NGUYÊN V5) ]]
 local function OptimizeCharacter()
     if Player.Character and Player.Character:FindFirstChild("Humanoid") then
         Player.Character.Humanoid.PlatformStand = true 
@@ -23,7 +27,7 @@ local function OptimizeCharacter()
     end
 end
 
--- [[ GIỮ NGUYÊN LOGIC V5: ELITE GLIDE ]]
+-- [[ HÀM BAY LƯỚT ELITE GLIDE (GIỮ NGUYÊN V5) ]]
 local function EliteGlide(TargetCFrame)
     local Root = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
     if not Root then return end
@@ -40,55 +44,77 @@ local function EliteGlide(TargetCFrame)
     CurrentTween.Completed:Wait()
 end
 
--- [[ VÒNG LẶP LOGIC CHÍNH ]]
-task.spawn(function()
-    print("--- KYBROND V5.2: NINJA FARM ACTIVE ---")
-    
-    -- Kết nối Noclip liên tục
-    RunService.Stepped:Connect(function()
-        if _G.AutoFarm then OptimizeCharacter() end
-    end)
+-- [[ LOGIC FARM CHÍNH ]]
+function StartFarm()
+    task.spawn(function()
+        -- Kết nối Noclip
+        local noclipConnect = RunService.Stepped:Connect(function()
+            if _G.AutoFarm then OptimizeCharacter() end
+        end)
 
-    while _G.AutoFarm do
-        task.wait()
-        
-        -- TÌM MỤC TIÊU: Chỉ lọc những quái có tên chứa chữ "Ninja"
-        local Target = nil
-        local MinDist = math.huge
-        
-        for _, n in pairs(NPCs:GetChildren()) do
-            -- Kiểm tra tên phải có chữ Ninja và còn sống
-            if n.Name:find("Ninja") and n:FindFirstChild("Humanoid") and n.Humanoid.Health > 0 and n:FindFirstChild("HumanoidRootPart") then
-                local dist = (Player.Character.HumanoidRootPart.Position - n.HumanoidRootPart.Position).Magnitude
-                if dist < MinDist then
-                    MinDist = dist
-                    Target = n
+        while _G.AutoFarm do
+            task.wait()
+            
+            local Target = nil
+            local MinDist = math.huge
+            
+            for _, n in pairs(NPCs:GetChildren()) do
+                if n.Name:find("Ninja") and n:FindFirstChild("Humanoid") and n.Humanoid.Health > 0 and n:FindFirstChild("HumanoidRootPart") then
+                    local dist = (Player.Character.HumanoidRootPart.Position - n.HumanoidRootPart.Position).Magnitude
+                    if dist < MinDist then
+                        MinDist = dist
+                        Target = n
+                    end
+                end
+            end
+
+            if Target and Target:FindFirstChild("HumanoidRootPart") then
+                local TRoot = Target.HumanoidRootPart
+                local GoalCFrame = TRoot.CFrame * CFrame.new(0, _G.Distance, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+                
+                EliteGlide(GoalCFrame)
+                
+                while _G.AutoFarm and Target.Parent and Target.Humanoid.Health > 0 do
+                    if Player.Character and Player.Character:FindFirstChild("HumanoidRootPart") then
+                        Player.Character.HumanoidRootPart.CFrame = TRoot.CFrame * CFrame.new(0, _G.Distance, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+                        Player.Character.HumanoidRootPart.Velocity = Vector3.new(0,0,0)
+                    end
+
+                    pcall(function()
+                        local r1 = RS:FindFirstChild("CombatRemote", true)
+                        local r2 = RS:FindFirstChild("RequestHit", true)
+                        if r1 then r1:FireServer() end
+                        if r2 then r2:FireServer(Target) end
+                    end)
+                    task.wait(0.1)
                 end
             end
         end
+        noclipConnect:Disconnect()
+    end)
+end
 
-        if Target and Target:FindFirstChild("HumanoidRootPart") then
-            local TRoot = Target.HumanoidRootPart
-            local GoalCFrame = TRoot.CFrame * CFrame.new(0, _G.Distance, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-            
-            -- Lướt tới Ninja mục tiêu
-            EliteGlide(GoalCFrame)
-            
-            -- Đánh cho đến khi quái chết
-            while _G.AutoFarm and Target.Parent and Target.Humanoid.Health > 0 do
-                -- Khóa vị trí 10 studs
-                Player.Character.HumanoidRootPart.CFrame = TRoot.CFrame * CFrame.new(0, _G.Distance, 0) * CFrame.Angles(math.rad(-90), 0, 0)
-                Player.Character.HumanoidRootPart.Velocity = Vector3.new(0,0,0)
+-- [[ GIAO DIỆN ĐIỀU KHIỂN ]]
+local MainTab = Window:MakeTab({
+	Name = "Main Farm",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
 
-                pcall(function()
-                    local r1 = RS:FindFirstChild("CombatRemote", true)
-                    local r2 = RS:FindFirstChild("RequestHit", true)
-                    if r1 then r1:FireServer() end
-                    if r2 then r2:FireServer(Target) end
-                end)
-                task.wait(0.1)
+MainTab:AddToggle({
+	Name = "Auto Farm Ninja",
+	Default = false,
+	Callback = function(Value)
+		_G.AutoFarm = Value
+        if Value then
+            StartFarm()
+        else
+            -- Khi tắt, trả lại trạng thái bình thường cho nhân vật
+            if Player.Character and Player.Character:FindFirstChild("Humanoid") then
+                Player.Character.Humanoid.PlatformStand = false
             end
-            -- Sau khi quái chết, vòng lặp 'while _G.AutoFarm' sẽ tự động quét đợt tiếp theo
         end
-    end
-end)
+	end    
+})
+
+OrionLib:Init()
