@@ -39,7 +39,7 @@ local function CreateBlackScreen()
     BlackFrame.Name = "MainOverlay"
     BlackFrame.Size = UDim2.new(1, 0, 1, 0)
     BlackFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) 
-    BlackFrame.BackgroundTransparency = 0 -- Giữ nguyên độ đen theo ý bạn
+    BlackFrame.BackgroundTransparency = 0.2 -- Giữ nguyên độ đen theo ý bạn
     BlackFrame.BorderSizePixel = 0
     BlackFrame.Parent = ScreenGui
 
