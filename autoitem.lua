@@ -1,4 +1,4 @@
--- [[ KYBROND CORE V31.1 - MOB ONLY - PERMANENT BLACKOUT - IMMORTAL LOOP ]]
+-- [[ KYBROND CORE V31.3 - PURE MOB - MAX SPEED - IMMORTAL LOOP ]]
 
 -- 1. KIỂM TRA TRẠNG THÁI LOAD GAME
 if not game:IsLoaded() then
@@ -16,13 +16,13 @@ local Player = Players.LocalPlayer
 Player:WaitForChild("PlayerGui")
 task.wait(2) 
 
--- [[ 3. LOGIC ANTI-AFK ]]
+-- [[ 2. LOGIC ANTI-AFK (CHỐNG KICK 20 PHÚT) ]]
 Player.Idled:Connect(function()
     VirtualUser:CaptureController()
     VirtualUser:ClickButton2(Vector2.new())
 end)
 
--- [[ 0. TẠO MÀN HÌNH ĐEN VĨNH VIỄN (FIX RESET ON SPAWN) ]]
+-- [[ 3. TẠO MÀN HÌNH ĐEN VĨNH VIỄN (RESET ON SPAWN = FALSE) ]]
 local function CreateBlackScreen()
     local oldGui = Player.PlayerGui:FindFirstChild("KybrondBlackout")
     if oldGui then oldGui:Destroy() end
@@ -39,7 +39,7 @@ local function CreateBlackScreen()
     BlackFrame.Name = "MainOverlay"
     BlackFrame.Size = UDim2.new(1, 0, 1, 0)
     BlackFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) 
-    BlackFrame.BackgroundTransparency = 0.2 -- Giữ nguyên độ đen theo ý bạn
+    BlackFrame.BackgroundTransparency = 0.1 -- Độ đen 0.1 theo bản gần nhất của bạn
     BlackFrame.BorderSizePixel = 0
     BlackFrame.Parent = ScreenGui
 
@@ -56,20 +56,25 @@ end
 
 CreateBlackScreen()
 
--- [[ 1. DANH SÁCH QUÁI (Đã loại bỏ Boss) ]]
+-- [[ 4. DANH SÁCH QUÁI & MAPPING (CHỈ GIỮ LẠI MOB) ]]
 local MobList = {"Swordsman4", "ArenaFighter2", "Ninja4", "Slime3", "Quincy4"}
 
--- [[ 2. MAPPING ĐẢO ]]
+-- Sử dụng bảng tĩnh (Static List) để đạt tốc độ truy xuất cao nhất
+local StaticPriorityList = {}
+for _, m in ipairs(MobList) do 
+    table.insert(StaticPriorityList, {name = m}) 
+end
+
 local LocationMapping = {
-    ["Swordsman4"]           = "Judgement",
-    ["ArenaFighter2"]        = "Lawless",
-    ["Ninja4"]               = "Ninja",
-    ["Slime3"]               = "Slime",
-    ["Quincy4"]              = "SoulDominion"
+    ["Swordsman4"]    = "Judgement",
+    ["ArenaFighter2"] = "Lawless",
+    ["Ninja4"]        = "Ninja",
+    ["Slime3"]        = "Slime",
+    ["Quincy4"]       = "SoulDominion"
 }
 
--- [[ CẤU HÌNH ]]
-local HeightOffset = 5
+-- [[ 5. CẤU HÌNH CHIẾN ĐẤU ]]
+local HeightOffset = 7 
 local SkillDelay = 0.1   
 local MyCurrentLocation = ""
 
@@ -78,7 +83,7 @@ local AbilityRemote = ReplicatedStorage:FindFirstChild("AbilitySystem")
     and ReplicatedStorage.AbilitySystem.Remotes:FindFirstChild("RequestAbility")
 local TeleportRemote = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("TeleportToPortal")
 
--- [[ MODULES ]]
+-- [[ 6. MODULES ]]
 local function CheckAndEquipTool()
     local char = Player.Character
     if char and not char:FindFirstChildOfClass("Tool") then
@@ -97,13 +102,14 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- [[ VÒNG LẶP CHÍNH - MOB ONLY ]]
+-- [[ 7. VÒNG LẶP CHÍNH - IMMORTAL PURE MOB ]]
 task.spawn(function()
-    warn("!!! KYBROND V31.1 - MOB ONLY FARMING ACTIVE !!!")
+    warn("!!! KYBROND V31.3 - PURE MOB PERFORMANCE ACTIVE !!!")
     
     while true do
-        task.wait(0.2)
+        task.wait(0.1) -- Tốc độ Radar cao nhất
         
+        -- Luôn cập nhật nhân vật (Immortal Logic)
         local char = Player.Character or Player.CharacterAdded:Wait()
         local humanoid = char:WaitForChild("Humanoid")
         local root = char:WaitForChild("HumanoidRootPart")
@@ -113,20 +119,20 @@ task.spawn(function()
             continue 
         end
 
-        -- Chỉ duyệt qua danh sách quái
-        for _, mobName in ipairs(MobList) do
-            local target = workspace.NPCs:FindFirstChild(mobName) or workspace:FindFirstChild(mobName, true)
+        for _, entry in ipairs(StaticPriorityList) do
+            local name = entry.name
+            local target = workspace.NPCs:FindFirstChild(name) or workspace:FindFirstChild(name, true)
             
             if target and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
-                local targetIsland = LocationMapping[mobName]
+                local targetIsland = LocationMapping[name]
                 
-                -- Teleport đảo
+                -- Teleport đảo giữ nguyên logic ổn định của bản Boss
                 if targetIsland and targetIsland ~= MyCurrentLocation then
                     if TeleportRemote then
                         root.AssemblyLinearVelocity = Vector3.new(0,0,0)
                         TeleportRemote:FireServer(targetIsland)
                         MyCurrentLocation = targetIsland
-                        task.wait(0.5) 
+                        task.wait(0.3) 
                     end
                 end
 
@@ -139,7 +145,7 @@ task.spawn(function()
                 hover.Name = "KybrondHover"; hover.MaxForce = Vector3.new(9e9, 9e9, 9e9); hover.Parent = root
                 hover.Velocity = Vector3.new(0,0,0)
 
-                -- Vòng lặp chiến đấu với quái
+                -- Vòng lặp chiến đấu thuần túy (Đã xóa bỏ mọi logic check Boss)
                 while target and target.Parent and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 do
                     if humanoid.Health <= 0 then break end
                     
@@ -154,7 +160,7 @@ task.spawn(function()
                         break 
                     end
                     task.wait(SkillDelay)
-                    -- Đã loại bỏ logic check Boss (BossCheck) ở đây để tập trung farm quái
+                    -- KHÔNG CÒN LOGIC BOSS CHECK Ở ĐÂY - TỐI ƯU TỐC ĐOẠN ĐÁNH
                 end
                 break 
             end
