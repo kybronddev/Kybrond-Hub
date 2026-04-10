@@ -42,16 +42,6 @@ local function CreateBlackScreen()
     BlackFrame.BackgroundTransparency = 0 -- Độ đen 0.1 theo bản gần nhất của bạn
     BlackFrame.BorderSizePixel = 0
     BlackFrame.Parent = ScreenGui
-
-    local StatusLabel = Instance.new("TextLabel")
-    StatusLabel.Text = "May nhin hong moc mat may ra gio"
-    StatusLabel.Size = UDim2.new(1, 0, 0, 50)
-    StatusLabel.Position = UDim2.new(0, 0, 0.45, 0)
-    StatusLabel.BackgroundTransparency = 1
-    StatusLabel.TextColor3 = Color3.fromRGB(255, 0, 0) 
-    StatusLabel.Font = Enum.Font.SourceSansBold
-    StatusLabel.TextSize = 30 
-    StatusLabel.Parent = BlackFrame
 end
 
 CreateBlackScreen()
