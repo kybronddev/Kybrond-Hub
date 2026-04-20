@@ -39,6 +39,7 @@ local LocationMapping = {
     ["Ninja4"]        = "Ninja",
     ["Slime3"]        = "Slime",
     ["Quincy4"]       = "SoulDominion"
+    ["Bunny2"]       = "Easter"
 }
 
 -- [[ 5. CẤU HÌNH CHIẾN ĐẤU ]]
