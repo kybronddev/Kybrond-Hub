@@ -40,10 +40,10 @@ local LocationMapping = {
     ["Slime3"]        = "Slime",
     ["Quincy4"]       = "SoulDominion",
     ["Bunny2"]        = "Easter",
-    ["StarterSea2"]   = "Delinquent1",
-    ["StarterSea2"]   = "StrongFighter3",
-    ["Bizarre"]   = "StrongBandit5",
-    ["Punch"]   = "FastNinja4"
+    ["Delinquent1"]   = "StarterSea2",
+    ["StrongFighter3"] = "StarterSea2",
+    ["StrongBandit5"] = "Bizarre",
+    ["FastNinja4"]    = "Punch"
 }
 
 -- [[ 5. CẤU HÌNH CHIẾN ĐẤU ]]
