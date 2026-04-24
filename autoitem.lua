@@ -25,7 +25,7 @@ end)
 
 
 -- [[ 4. DANH SÁCH QUÁI & MAPPING (CHỈ GIỮ LẠI MOB) ]]
-local MobList = {"Swordsman4", "ArenaFighter2", "Ninja4", "Slime3", "Quincy4", "Bunny2", "Delinquent1", "StrongFighter3", }
+local MobList = {"Swordsman4", "ArenaFighter2", "Ninja4", "Slime3", "Quincy4", "Bunny2", "Delinquent1", "StrongFighter3", StrongBandit5, FastNinja4}
 
 -- Sử dụng bảng tĩnh (Static List) để đạt tốc độ truy xuất cao nhất
 local StaticPriorityList = {}
