@@ -1,4 +1,4 @@
--- [[ KYBROND AUTO-TRADE V2.2 - FULL AUTOMATION HOTFIX ]]
+-- [[ KYBROND AUTO-TRADE V3.5 - SPEED RUN EDITION (SMART POLLING) ]]
 
 if not game:IsLoaded() then game.Loaded:Wait() end
 
@@ -7,119 +7,170 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Player = Players.LocalPlayer
 
 -- [[ 1. CẤU HÌNH (CONFIG) ]]
-local MainAccountName = "TenAccChinhCuaBan123" -- ĐIỀN TÊN ACC CHÍNH VÀO ĐÂY
-local MaxSlotsPerTrade = 4 -- Số ô đồ tối đa game cho phép nhét vào trong 1 lần trade
+local MainAccountName = "kybrond" 
+local MaxSlotsPerTrade = 4 
 
--- Cấu trúc: {Danh mục, Tên đồ}. Số lượng đã được tự động ép max 999999.
+-- ĐIỀN TÊN CỦA BẢNG TRADE (TÌM BẰNG DARK DEX) VÀO ĐÂY:
+-- Ví dụ: "TradeUI", "TradePanel", "TradeMenu", v.v.
+local TradeGuiName = "ĐIỀN_TÊN_UI_TRADE_VÀO_ĐÂY" 
+
 local ItemsToTrade = {
-    {"Items", "Aura Crate"},
-    {"Items", "Sword Crate"},
-    -- Cứ rải tên các món đồ bạn muốn vét sạch vào đây
+    {"Items", "Aura Crate"}, 
+    {"Items", "Cosmetic Crate"},
+    {"Items", "Easter Egg"},
+    {"Items", "Easter Egg"},
+    {"Items", "Easter Key"},
+    {"Items", "Mythical Chest"},
+    {"Items", "Clan Reroll"},
+    {"Items", "Power Shard"},
+    {"Items", "Frost Relic"},
+    {"Items", "Relic Part #1"},
+    {"Items", "Relic Part #2"},
+    {"Items", "Relic Part #3"},
+    {"Items", "Relic Part #4"},
+    {"Items", "Relic Part #5"},
+    {"Items", "Relic Part #6"},
+    {"Items", "Relic Part #7"},
+    {"Items", "Relic Part #8"},
+    {"Items", "Upper Seal"},
+    {"Items", "Race Reroll"},
+    {"Items", "Trait Reroll"},
+    {"Items", "Dominion Brand"},
+    {"Items", "Abyss Sigil"},
+    {"Items", "Chrysalis Sigil"},
 }
 
 local Remotes = ReplicatedStorage:WaitForChild("Remotes")
 local TradeRemotes = Remotes:WaitForChild("TradeRemotes")
 
--- [[ 2. VÒNG LẶP CHÍNH ]]
-task.spawn(function()
-    warn("!!! KYBROND AUTO-TRADE V2.2 ĐÃ KHỞI ĐỘNG !!!")
-    
-    -- ==========================================
-    -- LOGIC CỦA ACC CHÍNH (THỦ KHO)
-    -- ==========================================
-    if Player.Name == MainAccountName then
-        warn("!!! ĐÂY LÀ ACC CHÍNH - TREO MÁY NHẬN ĐỒ !!!")
-        
-        while true do
-            task.wait(2)
-            pcall(function()
-                -- CHÚ Ý: BẠN CẦN THÊM REMOTE "CHẤP NHẬN LỜI MỜI" VÀO ĐÂY SAU KHI LẤY ĐƯỢC TỪ SIMPLESPY
-                -- Ví dụ: TradeRemotes.AcceptRequest:FireServer()
-                
-                TradeRemotes.SetReady:FireServer(true)
-                task.wait(1)
-                TradeRemotes.ConfirmTrade:FireServer()
-            end)
-        end
-        return 
-    end
+if Player.Name == MainAccountName then
+    warn("!!! ĐÂY LÀ ACC CHÍNH. SCRIPT TỰ ĐỘNG NGẮT ĐỂ BẢO VỆ TÀI KHOẢN !!!")
+    return 
+end
 
-    -- ==========================================
-    -- LOGIC CỦA ACC PHỤ (GOM ĐỒ)
-    -- ==========================================
-    warn("!!! ĐÂY LÀ ACC PHỤ - BẮT ĐẦU VÉT SẠCH KHO ĐỒ !!!")
-    task.wait(5) -- Chờ game load ổn định
+-- [[ 2. HÀM TỰ ĐỘNG ĐẾM ĐỒ TỪ UI (Giữ nguyên độ mượt từ V3.4) ]]
+local function GetItemAmount(itemName)
+    local PlayerGui = Player:WaitForChild("PlayerGui")
+    local InventoryUI = PlayerGui:FindFirstChild("InventoryPanelUI")
+    if not InventoryUI then return 0 end
+    
+    local MainFrame = InventoryUI:FindFirstChild("MainFrame")
+    local Frame = MainFrame and MainFrame:FindFirstChild("Frame")
+    local Content = Frame and Frame:FindFirstChild("Content")
+    local Holder = Content and Content:FindFirstChild("Holder")
+    local StorageHolder = Holder and Holder:FindFirstChild("StorageHolder")
+    local Storage = StorageHolder and StorageHolder:FindFirstChild("Storage")
+    
+    if not Storage then return 0 end
+    
+    local itemFrame = Storage:FindFirstChild("Item_" .. itemName)
+    if itemFrame then
+        for _, child in ipairs(itemFrame:GetDescendants()) do
+            if child:IsA("TextLabel") then
+                local numberMatch = string.match(child.Text, "%d+")
+                if numberMatch then return tonumber(numberMatch) end
+            end
+        end
+        return 1
+    end
+    return 0
+end
+
+-- [[ 3. LOGIC CỦA ACC PHỤ ]]
+task.spawn(function()
+    warn("!!! ĐÂY LÀ ACC PHỤ - BẮT ĐẦU VÉT SẠCH KHO ĐỒ TỐC ĐỘ CAO !!!")
+    task.wait(5) 
 
     local MainPlayer = Players:WaitForChild(MainAccountName, 30)
-    if not MainPlayer then
-        warn("Lỗi: Không tìm thấy Acc Chính trong server này!")
-        return
-    end
+    if not MainPlayer then return warn("Lỗi: Không tìm thấy Acc Chính!") end
 
-    -- 1. FIX KẸT SCRIPT: Dùng task.spawn để khởi tạo dữ liệu không bị chặn đứng code
-    task.spawn(function()
-        pcall(function()
-            Remotes.RequestInventory:FireServer()
-            TradeRemotes.GetTradablePlayers:InvokeServer()
-        end)
-    end)
-    task.wait(2)
-
-    -- 2. FIX KHOẢNG CÁCH: Bay thẳng đến trước mặt Acc Chính để gửi lệnh không bị hụt
     local myRoot = Player.Character and Player.Character:FindFirstChild("HumanoidRootPart")
     local mainRoot = MainPlayer.Character and MainPlayer.Character:FindFirstChild("HumanoidRootPart")
     
     if myRoot and mainRoot then
         myRoot.CFrame = mainRoot.CFrame * CFrame.new(0, 0, -3)
         warn("-> Đã bay đến vị trí Acc Chính!")
-        task.wait(1.5) -- Chờ server đồng bộ tọa độ
+        task.wait(1.5) 
     else
-        warn("Lỗi: Nhân vật chưa load xong RootPart!")
-        return
+        return warn("Lỗi: Nhân vật chưa load xong RootPart!")
     end
 
-    -- 3. VÒNG LẶP CHIA MẺ VÀ GIAO DỊCH
     while #ItemsToTrade > 0 do
-        
+        warn("-> Đang khởi tạo dữ liệu với Server...")
+        pcall(function()
+            Remotes.RequestInventory:FireServer()
+            TradeRemotes.GetTradablePlayers:InvokeServer()
+        end)
+        task.wait(1) 
+
         warn("-> Đang gửi yêu cầu Trade tới Acc Chính...")
         TradeRemotes.SendTradeRequest:FireServer(MainPlayer.UserId)
         
-        task.wait(5) -- Chờ bảng Trade hiện lên
+        -- KỸ THUẬT SMART POLLING (CHỜ THÔNG MINH)
+        warn("⏳ BẠN CÓ THỂ BẤM 'ACCEPT' BẤT CỨ LÚC NÀO...")
+        local waitTime = 0
+        local tradeOpened = false
+        while waitTime < 15 do
+            if Player.PlayerGui:FindFirstChild(TradeGuiName) then
+                tradeOpened = true
+                warn("⚡ Đã phát hiện Bảng Trade! Vào việc ngay!")
+                break -- Phá vòng lặp chờ, chạy tiếp ngay lập tức
+            end
+            task.wait(0.2) -- Check mỗi 0.2s để phản ứng cực nhanh
+            waitTime = waitTime + 0.2
+        end
+
+        if not tradeOpened then
+            warn("⚠️ Quá thời gian chờ hoặc sai tên TradeGuiName. Tiếp tục chạy dự phòng!")
+        end
 
         local itemsThisRound = math.min(MaxSlotsPerTrade, #ItemsToTrade)
+        local hasItemsToPut = false
         
-        warn("-> Bắt đầu vét sạch " .. itemsThisRound .. " loại đồ vào khung...")
+        warn("-> Bắt đầu nhét đồ (TỐC ĐỘ ÉP XUNG)...")
         for i = 1, itemsThisRound do
             local itemData = ItemsToTrade[i]
-            local category = itemData[1]
-            local itemName = itemData[2]
+            local realAmount = GetItemAmount(itemData[2])
             
-            -- ÉP SỐ LƯỢNG 999999 TRỰC TIẾP VÀO REMOTE
-            TradeRemotes.AddItemToTrade:FireServer(category, itemName, 999999)
-            task.wait(0.3) -- Chống nghẽn mạng
+            if realAmount > 0 then
+                hasItemsToPut = true
+                pcall(function()
+                    TradeRemotes.AddItemToTrade:FireServer(itemData[1], itemData[2], realAmount)
+                end)
+                task.wait(0.1) -- ÉP XUNG TỐC ĐỘ TỪ 0.5 XUỐNG 0.1s
+            end
+        end
+
+        if not hasItemsToPut then
+            for i = 1, itemsThisRound do table.remove(ItemsToTrade, 1) end
+            continue 
         end
 
         warn("-> Đã nhét xong, chuẩn bị khóa giao dịch (Set Ready)...")
-        task.wait(1)
-        TradeRemotes.SetReady:FireServer(true)
+        pcall(function()
+            TradeRemotes.SetReady:FireServer(true)
+            Remotes.RequestInventory:FireServer()
+        end)
 
-        warn("-> Chờ đếm ngược hệ thống...")
-        task.wait(4) 
+        -- Thời gian cho Acc Chính chốt đơn
+        warn("⏳ ACC PHỤ ĐÃ READY! BẠN CÓ 10 GIÂY ĐỂ CHỐT ĐƠN BÊN ACC CHÍNH!")
+        task.wait(10) -- Bạn có thể hạ số 10 này xuống 7 hoặc 5 nếu tay bạn thao tác nhanh
 
-        warn("-> Bấm Xác nhận cuối cùng (Confirm Trade)!")
-        TradeRemotes.ConfirmTrade:FireServer()
+        warn("-> Acc Phụ tự động Xác nhận cuối cùng (Confirm Trade)!")
+        pcall(function()
+            TradeRemotes.ConfirmTrade:FireServer()
+            Remotes.RequestInventory:FireServer()
+        end)
 
-        task.wait(4) -- Chờ giao dịch chuyển đồ vào kho
+        task.wait(2) -- Chờ game xử lý chuyển đồ (Hạ từ 4s xuống 2s)
 
-        -- Xóa các món đồ đã trade thành công khỏi danh sách để đẩy danh sách lên
         for i = 1, itemsThisRound do
             table.remove(ItemsToTrade, 1) 
         end
 
         warn("✅ Đã trade xong 1 đợt! Số loại vật phẩm cần trade còn lại: " .. #ItemsToTrade)
-        task.wait(3) -- Nghỉ ngơi giữa 2 vòng lặp
+        task.wait(1) -- Rút ngắn thời gian nghỉ giữa các đợt
     end
 
-    warn("🏆 HOÀN THÀNH VÉT SẠCH TOÀN BỘ ĐỒ TỪ ACC NÀY! 🏆")
-    -- game:Shutdown() -- Tự động tắt game sau khi xong việc
+    warn("🏆 HOÀN THÀNH VÉT SẠCH TOÀN BỘ ĐỒ TỪ ACC NÀY TỐC ĐỘ BÀN THỜ! 🏆")
 end)
