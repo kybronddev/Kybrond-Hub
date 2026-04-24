@@ -22,32 +22,10 @@ Player.Idled:Connect(function()
     VirtualUser:ClickButton2(Vector2.new())
 end)
 
--- [[ 3. TẠO MÀN HÌNH ĐEN VĨNH VIỄN (RESET ON SPAWN = FALSE) ]]
-local function CreateBlackScreen()
-    local oldGui = Player.PlayerGui:FindFirstChild("KybrondBlackout")
-    if oldGui then oldGui:Destroy() end
 
-    local ScreenGui = Instance.new("ScreenGui")
-    local BlackFrame = Instance.new("Frame")
-
-    ScreenGui.Name = "KybrondBlackout"
-    ScreenGui.Parent = Player.PlayerGui
-    ScreenGui.IgnoreGuiInset = true 
-    ScreenGui.DisplayOrder = 9999 
-    ScreenGui.ResetOnSpawn = false 
-
-    BlackFrame.Name = "MainOverlay"
-    BlackFrame.Size = UDim2.new(1, 0, 1, 0)
-    BlackFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0) 
-    BlackFrame.BackgroundTransparency = 0 -- Độ đen 0.1 theo bản gần nhất của bạn
-    BlackFrame.BorderSizePixel = 0
-    BlackFrame.Parent = ScreenGui
-end
-
-CreateBlackScreen()
 
 -- [[ 4. DANH SÁCH QUÁI & MAPPING (CHỈ GIỮ LẠI MOB) ]]
-local MobList = {"Swordsman4", "ArenaFighter2", "Ninja4", "Slime3", "Quincy4", "Bunny2"}
+local MobList = {"Swordsman4", "ArenaFighter2", "Ninja4", "Slime3", "Quincy4", "Bunny2", "Delinquent1", "StrongFighter3", }
 
 -- Sử dụng bảng tĩnh (Static List) để đạt tốc độ truy xuất cao nhất
 local StaticPriorityList = {}
@@ -61,7 +39,11 @@ local LocationMapping = {
     ["Ninja4"]        = "Ninja",
     ["Slime3"]        = "Slime",
     ["Quincy4"]       = "SoulDominion",
-    ["Bunny2"]        = "Easter"
+    ["Bunny2"]        = "Easter",
+    ["StarterSea2"]   = "Delinquent1",
+    ["StarterSea2"]   = "StrongFighter3",
+    ["Bizarre"]   = "StrongBandit5",
+    ["Punch"]   = "FastNinja4"
 }
 
 -- [[ 5. CẤU HÌNH CHIẾN ĐẤU ]]
