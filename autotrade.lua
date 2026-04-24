@@ -8,7 +8,7 @@ local Player = Players.LocalPlayer
 
 -- [[ 1. CẤU HÌNH (CONFIG) ]]
 local MainAccountName = "kybrond" 
-local MaxSlotsPerTrade = 4 
+local MaxSlotsPerTrade = 25 
 
 -- ĐIỀN TÊN CỦA BẢNG TRADE (TÌM BẰNG DARK DEX) VÀO ĐÂY:
 -- Ví dụ: "TradeUI", "TradePanel", "TradeMenu", v.v.
